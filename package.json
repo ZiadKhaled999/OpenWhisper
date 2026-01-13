@@ -9,7 +9,9 @@
     "neu:build": "neu build",
     "neu:package": "neu package"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@neutralinojs/lib": "^6.4.0"
+  },
   "devDependencies": {
     "@neutralinojs/neu": "^11.6.0"
   },
@@ -20,6 +22,6 @@
     "whisper",
     "neutralinojs"
   ],
-  "author": "",
+  "author": "Weroperking",
   "license": "MIT"
 }

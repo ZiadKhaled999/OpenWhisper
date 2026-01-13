@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@neutralinojs/lib':
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       '@neutralinojs/neu':
         specifier: ^11.6.0
@@ -19,9 +23,22 @@ packages:
     engines: {node: '>=10.12.0'}
     hasBin: true
 
+  '@neutralinojs/lib@6.4.0':
+    resolution: {integrity: sha512-jbYkxUtiLGWxah3rdNuOFu30QSi48L8N2Irmv3wZfJX4ftzm8QqZGQepJ5+bPJ7ogyPU9hEBNtEdHOXwZWoxoQ==}
+
   '@neutralinojs/neu@11.6.0':
     resolution: {integrity: sha512-S1LKPZSFwh29XrajhvXimhiCgewI17GQDreETQGDiGRyfKlGM9WadpdcwT/GKbHK42VK1KI1hnNsHOR5HeGnlA==}
     hasBin: true
+
+  '@rollup/rollup-darwin-x64@4.55.1':
+    resolution: {integrity: sha512-rDUjG25C9qoTm+e02Esi+aqTKSBYwVTaoS1wxcN47/Luqef57Vgp96xNANwt5npq9GDxsH7kXxNkJVEsWEOEaQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@rollup/rollup-linux-x64-gnu@4.55.1':
+    resolution: {integrity: sha512-a8G4wiQxQG2BAvo+gU6XrReRRqj+pLS2NGXKm8io19goR+K8lw269eTrPkSdDTALwMmJp4th2Uh0D8J9bEV1vg==}
+    cpu: [x64]
+    os: [linux]
 
   ansi-styles@4.3.0:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
@@ -413,6 +430,11 @@ snapshots:
       glob: 7.2.3
       minimatch: 3.1.2
 
+  '@neutralinojs/lib@6.4.0':
+    optionalDependencies:
+      '@rollup/rollup-darwin-x64': 4.55.1
+      '@rollup/rollup-linux-x64-gnu': 4.55.1
+
   '@neutralinojs/neu@11.6.0':
     dependencies:
       '@electron/asar': 3.4.1
@@ -436,6 +458,12 @@ snapshots:
     transitivePeerDependencies:
       - debug
       - supports-color
+
+  '@rollup/rollup-darwin-x64@4.55.1':
+    optional: true
+
+  '@rollup/rollup-linux-x64-gnu@4.55.1':
+    optional: true
 
   ansi-styles@4.3.0:
     dependencies:

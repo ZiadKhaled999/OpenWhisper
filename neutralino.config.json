@@ -3,7 +3,7 @@
   "version": "1.0.7",
   "name": "OpenWhisper",
   "defaultWindow": {
-    "title": "Windows 11 Audio Suite",
+    "title": "OpenWhisper",
     "width": 400,
     "height": 80,
     "resizable": false,
@@ -17,6 +17,7 @@
     "exitProcessOnClose": true
   },
   "nativeBlockList": [],
+  "nativeAllowList": ["window.*"],
   "webBrowserBlockList": [],
   "enableServer": true,
   "host": "127.0.0.1",

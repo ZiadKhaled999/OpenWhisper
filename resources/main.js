@@ -1,15 +1,24 @@
-(() => {
+
+Neutralino.init();
+
+function initializeRecorderApp() {
     let mode = 'idle', timerSeconds = 0, timerInterval = null, lastTranscript = "Sample transcribed text from Windows 11 Audio Suite.", mediaRecorder = null, audioChunks = [], apiKey = '', detectedLanguage = 'en', activeModeType = null;
     const recorderUI = document.getElementById('recorder-ui'), apiUI = document.getElementById('api-ui'), settingsUI = document.getElementById('settings-ui'), mainAction = document.getElementById('main-action-trigger'), mainIcon = document.getElementById('main-icon'), timerDisplay = document.getElementById('timer-display'), liveDot = document.getElementById('live-dot'), pauseBtn = document.getElementById('pause-btn'), copyBtn = document.getElementById('copy-btn'), apiInput = document.getElementById('api-input'), saveApiBtn = document.getElementById('save-api'), langStatus = document.getElementById('lang-status'), standardModeBtn = document.getElementById('standard-settings-btn'), vibeModeBtn = document.getElementById('vibe-settings-btn'), enhancerModeBtn = document.getElementById('enhancer-settings-btn'), settingsBtn = document.getElementById('settings-btn'), closeSettingsBtn = document.getElementById('close-settings');
-    
+
     const languageMap = {
         'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'pt': 'Portuguese', 'ru': 'Russian', 'ja': 'Japanese', 'ko': 'Korean', 'zh': 'Chinese', 'ar': 'Arabic', 'hi': 'Hindi'
     };
-    
+
     lucide.createIcons();
-    window.onload = () => { apiKey = localStorage.getItem('groqApiKey') || ''; apiInput.value = apiKey; const savedMode = localStorage.getItem('activeModeType'); if (savedMode) { activeModeType = savedMode; updateModeDisplay() } };
+    apiKey = localStorage.getItem('groqApiKey') || '';
+    apiInput.value = apiKey;
+    const savedMode = localStorage.getItem('activeModeType');
+    if (savedMode) {
+        activeModeType = savedMode;
+        updateModeDisplay();
+    }
     const updateModeDisplay = () => { const resetStyle = 'rgba(255,255,255,0.05)'; const activeStyle = 'rgba(232,17,35,0.3)'; standardModeBtn.style.background = activeModeType === 'standard' ? activeStyle : resetStyle; vibeModeBtn.style.background = activeModeType === 'vibe' ? activeStyle : resetStyle; enhancerModeBtn.style.background = activeModeType === 'enhancer' ? activeStyle : resetStyle };
-    
+
     standardModeBtn.onclick = () => { activeModeType = activeModeType === 'standard' ? null : 'standard'; localStorage.setItem('activeModeType', activeModeType || ''); updateModeDisplay() };
     vibeModeBtn.onclick = () => { activeModeType = activeModeType === 'vibe' ? null : 'vibe'; localStorage.setItem('activeModeType', activeModeType || ''); updateModeDisplay() };
     enhancerModeBtn.onclick = () => { activeModeType = activeModeType === 'enhancer' ? null : 'enhancer'; localStorage.setItem('activeModeType', activeModeType || ''); updateModeDisplay() };
@@ -19,7 +28,7 @@
     async function startTranscribing() { if (!apiKey) { alert('Please set your Groq API key first.'); resetUI(); return } mode = 'transcribing'; clearInterval(timerInterval); mediaRecorder.stop(); await new Promise(r => setTimeout(r, 200)); mainAction.innerHTML = '<div class="magic-loader"></div>'; mainAction.style.background = 'transparent'; mainAction.style.boxShadow = 'none'; mainAction.setAttribute('data-title', 'Detecting language...'); try { if (audioChunks.length === 0) throw new Error('No audio data recorded. Please try recording again.'); const totalSize = audioChunks.reduce((a, c) => a + c.size, 0); if (totalSize < 1024) throw new Error('Audio recording too short (' + totalSize + ' bytes). Please record for at least 1-2 seconds.'); const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType }); if (audioBlob.size < 1024) throw new Error('Final audio blob is too small (' + audioBlob.size + ' bytes). Recording may have failed.'); const formData = new FormData(); formData.append('file', audioBlob, 'recording.webm'); formData.append('model', 'whisper-large-v3-turbo'); formData.append('temperature', '0'); formData.append('response_format', 'verbose_json'); mainAction.setAttribute('data-title', 'Transcribing...'); const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}` }, body: formData }); if (!response.ok) { let errorDetails = `API error: ${response.status} ${response.statusText}`; try { const errorBody = await response.text(); errorDetails += ` | Response body: ${errorBody}`; console.error('API Error Response:', errorBody) } catch (e) { errorDetails += ' | Could not read response body' } throw new Error(errorDetails) } const data = await response.json(); lastTranscript = data.text || 'No transcript available.'; detectedLanguage = data.language || 'en'; langStatus.textContent = languageMap[detectedLanguage] || 'Detected: ' + detectedLanguage; if (activeModeType === 'standard') { resetUI() } else if (activeModeType === 'vibe') { await applySeniorArchitectMode() } else if (activeModeType === 'enhancer') { await applyEnhancer() } else { resetUI() } } catch (e) { console.error('Transcription error:', e.name, e.message); alert('Transcription failed: ' + e.message); resetUI() } }
     async function applySeniorArchitectMode() { mainAction.innerHTML = '<div class="magic-loader"></div>'; mainAction.style.background = 'transparent'; mainAction.setAttribute('data-title', 'Consulting with Senior Architect...'); try { const architectPrompt = `You are a seasoned Senior Software Architect with 20+ years of experience designing enterprise systems. Analyze this requirement and respond as if you're having a casual conversation with a colleague:\n\n"${lastTranscript}"\n\nYour approach:\n1. Understand the full architectural context and intent from this plain-language description.\n2. Use the technology stack ONLY if explicitly mentioned by the user. If mentioned, enhance the request and suggest optimal tools.\n3. If NO tech stack is specified: Act as a technical lead - interpret the user's intent, draft a complete architectural blueprint, and outline the initial project structure.\n4. Always communicate in plain, jargon-free language. Imagine explaining this to a non-technical stakeholder.\n5. Provide enterprise-grade, production-ready thinking - think like someone who has shipped complex systems at scale.\n\nRespond conversationally and casually, as if discussing architecture over coffee. Be concise but thorough.`; const response = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ messages: [{ role: 'user', content: architectPrompt }], model: 'moonshotai/kimi-k2-instruct-0905', temperature: 0.6, max_completion_tokens: 2048, top_p: 1, stream: false }) }); if (!response.ok) throw new Error(`API error: ${response.status}`); const data = await response.json(); lastTranscript = data.choices[0].message.content; mainAction.innerHTML = '<i data-lucide="mic" class="w-4 h-4 text-white"></i>'; mainAction.style.background = 'var(--win-red)'; mainAction.setAttribute('data-title', 'Start Recording'); lucide.createIcons() } catch (e) { console.error('Senior Architect mode error:', e); alert('Failed to apply Senior Architect mode: ' + e.message) } }
     async function applyEnhancer() { mainAction.innerHTML = '<div class="magic-loader"></div>'; mainAction.style.background = 'transparent'; mainAction.setAttribute('data-title', 'Enhancing...'); try { const enhancePrompt = `You are a professional text editor. Your ONLY task is to enhance the following text by fixing grammar, improving clarity, enhancing structure, and polishing it while strictly maintaining the original meaning and intent.
-    
+
 CRITICAL RULES:
 1. Output ONLY the enhanced text. Nothing else.
 2. Do NOT add commentary, explanations, or pleasantries.
@@ -34,7 +43,7 @@ Text to enhance:
     function resetUI() { mode = 'idle'; timerSeconds = 0; clearInterval(timerInterval); timerDisplay.textContent = '00:00'; recorderUI.classList.remove('is-recording'); liveDot.classList.add('hidden'); pauseBtn.classList.add('opacity-30', 'cursor-not-allowed'); mainAction.innerHTML = '<i id="main-icon" data-lucide="mic" class="w-4 h-4 text-white"></i>'; mainAction.style.background = 'var(--win-red)'; mainAction.style.boxShadow = '0 0 15px rgba(232,17,35,0.4)'; mainAction.setAttribute('data-title', 'Start Recording'); lucide.createIcons() }
     function clearTranscript() { lastTranscript = 'Sample transcribed text from Windows 11 Audio Suite.'; langStatus.textContent = 'Auto-detecting language...' }
     copyBtn.onclick = async () => { try { await navigator.clipboard.writeText(lastTranscript); clearTranscript(); copyBtn.classList.add('text-green-400'); copyBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>'; lucide.createIcons(); setTimeout(() => { copyBtn.classList.remove('text-green-400'); copyBtn.innerHTML = '<i data-lucide="copy" class="w-4 h-4"></i>'; lucide.createIcons() }, 2000) } catch (e) { console.error('Failed to copy text:', e) } }
-    
+
     settingsBtn.onclick = () => { recorderUI.classList.remove('visible-ui'); recorderUI.classList.add('hidden-ui'); settingsUI.classList.remove('hidden-ui'); settingsUI.classList.add('visible-ui') };
     closeSettingsBtn.onclick = () => { settingsUI.classList.remove('visible-ui'); settingsUI.classList.add('hidden-ui'); recorderUI.classList.remove('hidden-ui'); recorderUI.classList.add('visible-ui') };
     document.getElementById('api-btn').onclick = () => { recorderUI.classList.remove('visible-ui'); recorderUI.classList.add('hidden-ui'); apiUI.classList.remove('hidden-ui'); apiUI.classList.add('visible-ui'); setTimeout(() => document.getElementById('api-input').focus(), 100) };
@@ -44,4 +53,6 @@ Text to enhance:
         clearTranscript();
         resetUI();
     };
-})();
+}
+
+Neutralino.events.on("ready", initializeRecorderApp);
